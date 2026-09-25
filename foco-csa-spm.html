@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Foco — CSA & SPM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14172B;
+    --surface: #1E2240;
+    --surface-2: #262B4D;
+    --text: #EDEEF5;
+    --muted: #9296B5;
+    --csa: #6C8EF5;
+    --csa-dim: #6C8EF530;
+    --spm: #4FB3A9;
+    --spm-dim: #4FB3A930;
+    --amber: #E8A33D;
+    --danger: #E0637A;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 48px;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 6vw, 38px);
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 28px; }
+
+  .streak-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border-radius: 20px;
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .streak-num { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 700; color: var(--amber); line-height: 1; }
+  .streak-label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .week-dots { display: flex; gap: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 4px; background: var(--surface-2); border: 1px solid #ffffff14; }
+  .dot.hit { background: var(--amber); border-color: var(--amber); }
+  .dot.today { box-shadow: 0 0 0 2px var(--text); }
+
+  .card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 19px; }
+  .goal-edit { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .goal-edit input {
+    width: 46px; background: var(--surface-2); border: none; border-radius: 8px;
+    color: var(--text); font-family: inherit; font-size: 13px; padding: 4px 6px; text-align: center;
+  }
+
+  .progress-track { height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+  .csa .progress-fill { background: var(--csa); }
+  .spm .progress-fill { background: var(--spm); }
+
+  .time-row { display: flex; justify-content: space-between; align-items: center; }
+  .timer-display { font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; letter-spacing: 0.02em; }
+  .today-total { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  .btns { display: flex; gap: 8px; }
+  button {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px;
+    border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button:active { opacity: 0.75; }
+  .csa .btn-primary { background: var(--csa); color: #0d1230; }
+  .spm .btn-primary { background: var(--spm); color: #0d1230; }
+  .btn-secondary { background: var(--surface-2); color: var(--text); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .note-input {
+    width: 100%; margin-top: 12px; background: var(--surface-2); border: none;
+    border-radius: 10px; color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 8px 10px; resize: none;
+  }
+  .note-input::placeholder { color: var(--muted); }
+
+  .log-toggle { text-align: center; margin-top: 24px; }
+  .log-toggle button { background: none; color: var(--muted); font-size: 13px; text-decoration: underline; padding: 4px; }
+  #log { display: none; margin-top: 12px; }
+  #log.open { display: block; }
+  .log-entry { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; font-size: 13px; }
+  .log-date { font-weight: 600; margin-bottom: 4px; }
+  .log-line { color: var(--muted); }
+  .log-line b { color: var(--text); }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F5F5FA; --surface: #ffffff; --surface-2: #ECECF6; --text: #1A1C2E; --muted: #6B6E8C;
+    }
+    :root:not([data-theme="dark"]) .dot { border-color: #00000010; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Foco do dia</h1>
+  <p class="sub">CSA + SPM — um pouco todo dia constrói o resto do ano.</p>
+
+  <div class="streak-card">
+    <div>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label">dias seguidos com as duas metas batidas</div>
+    </div>
+    <div class="week-dots" id="weekDots"></div>
+  </div>
+
+  <div class="card csa" id="card-csa">
+    <div class="card-head">
+      <div class="card-title">CSA</div>
+      <div class="goal-edit">meta diária <input type="number" id="goal-csa" min="5" step="5"> min</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="fill-csa" style="width:0%"></div></div>
+    <div class="time-row">
+      <div>
+        <div class="timer-display" id="timer-csa">00:00</div>
+        <div class="today-total" id="today-csa">0min hoje</div>
+      </div>
+      <div class="btns">
+        <button class="btn-secondary" id="reset-csa">Zerar</button>
+        <button class="btn-primary" id="toggle-csa">Iniciar</button>
+      </div>
+    </div>
+    <textarea class="note-input" id="note-csa" rows="1" placeholder="O que estudou? (opcional)"></textarea>
+  </div>
+
+  <div class="card spm" id="card-spm">
+    <div class="card-head">
+      <div class="card-title">SPM</div>
+      <div class="goal-edit">meta diária <input type="number" id="goal-spm" min="5" step="5"> min</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="fill-spm" style="width:0%"></div></div>
+    <div class="time-row">
+      <div>
+        <div class="timer-display" id="timer-spm">00:00</div>
+        <div class="today-total" id="today-spm">0min hoje</div>
+      </div>
+      <div class="btns">
+        <button class="btn-secondary" id="reset-spm">Zerar</button>
+        <button class="btn-primary" id="toggle-spm">Iniciar</button>
+      </div>
+    </div>
+    <textarea class="note-input" id="note-spm" rows="1" placeholder="O que estudou? (opcional)"></textarea>
+  </div>
+
+  <div class="log-toggle"><button id="logBtn">ver histórico</button></div>
+  <div id="log"></div>
+</div>
+
+<script>
+const STORE_KEY = 'foco_csa_spm_v1';
+const todayStr = () => new Date().toISOString().slice(0,10);
+const fmt = s => {
+  const m = Math.floor(s/60).toString().padStart(2,'0');
+  const sec = Math.floor(s%60).toString().padStart(2,'0');
+  return m+':'+sec;
+};
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) { console.error('storage read failed', e); }
+  return { goals: { csa: 40, spm: 20 }, days: {}, notes: {} };
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e) { console.error('storage save failed', e); }
+}
+
+let state = load();
+if (!state.days[todayStr()]) state.days[todayStr()] = { csa: 0, spm: 0 };
+
+const timers = {
+  csa: { running: false, elapsed: 0, startedAt: null, interval: null },
+  spm: { running: false, elapsed: 0, startedAt: null, interval: null }
+};
+
+document.getElementById('goal-csa').value = state.goals.csa;
+document.getElementById('goal-spm').value = state.goals.spm;
+document.getElementById('goal-csa').addEventListener('change', e => { state.goals.csa = Math.max(5, +e.target.value || 40); save(); renderAll(); });
+document.getElementById('goal-spm').addEventListener('change', e => { state.goals.spm = Math.max(5, +e.target.value || 20); save(); renderAll(); });
+
+const day = state.days[todayStr()];
+
+function tick(cat) {
+  const t = timers[cat];
+  const now = Date.now();
+  const liveElapsed = t.elapsed + (t.running ? (now - t.startedAt)/1000 : 0);
+  document.getElementById('timer-'+cat).textContent = fmt(liveElapsed);
+}
+
+function toggle(cat) {
+  const t = timers[cat];
+  const btn = document.getElementById('toggle-'+cat);
+  if (!t.running) {
+    t.running = true;
+    t.startedAt = Date.now();
+    btn.textContent = 'Pausar';
+    t.interval = setInterval(() => tick(cat), 500);
+  } else {
+    t.running = false;
+    clearInterval(t.interval);
+    const secs = (Date.now() - t.startedAt) / 1000;
+    t.elapsed += secs;
+    day[cat] += secs;
+    state.days[todayStr()] = day;
+    const note = document.getElementById('note-'+cat).value.trim();
+    if (note) {
+      if (!state.notes[todayStr()]) state.notes[todayStr()] = {};
+      state.notes[todayStr()][cat] = note;
+    }
+    save();
+    btn.textContent = 'Iniciar';
+    t.elapsed = 0;
+    tick(cat);
+    renderAll();
+  }
+}
+
+function resetTimer(cat) {
+  const t = timers[cat];
+  t.running = false;
+  clearInterval(t.interval);
+  t.elapsed = 0;
+  document.getElementById('toggle-'+cat).textContent = 'Iniciar';
+  tick(cat);
+}
+
+document.getElementById('toggle-csa').addEventListener('click', () => toggle('csa'));
+document.getElementById('toggle-spm').addEventListener('click', () => toggle('spm'));
+document.getElementById('reset-csa').addEventListener('click', () => resetTimer('csa'));
+document.getElementById('reset-spm').addEventListener('click', () => resetTimer('spm'));
+
+function renderAll() {
+  ['csa','spm'].forEach(cat => {
+    const goalSec = state.goals[cat] * 60;
+    const done = day[cat] || 0;
+    const pct = Math.min(100, (done / goalSec) * 100);
+    document.getElementById('fill-'+cat).style.width = pct + '%';
+    document.getElementById('today-'+cat).textContent = Math.round(done/60) + 'min hoje (meta: ' + state.goals[cat] + 'min)';
+  });
+  renderStreak();
+  renderLog();
+}
+
+function metGoal(dateKey) {
+  const d = state.days[dateKey];
+  if (!d) return false;
+  return d.csa >= state.goals.csa*60 && d.spm >= state.goals.spm*60;
+}
+
+function renderStreak() {
+  let streak = 0;
+  let cursor = new Date();
+  // count backwards from today while goal met; today counts only if already met
+  while (true) {
+    const key = cursor.toISOString().slice(0,10);
+    if (metGoal(key)) { streak++; cursor.setDate(cursor.getDate()-1); }
+    else if (key === todayStr()) { cursor.setDate(cursor.getDate()-1); continue; }
+    else break;
+  }
+  document.getElementById('streakNum').textContent = streak;
+
+  const dotsEl = document.getElementById('weekDots');
+  dotsEl.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const div = document.createElement('div');
+    div.className = 'dot' + (metGoal(key) ? ' hit' : '') + (key === todayStr() ? ' today' : '');
+    dotsEl.appendChild(div);
+  }
+}
+
+function renderLog() {
+  const logEl = document.getElementById('log');
+  const keys = Object.keys(state.days).sort().reverse().slice(0, 14);
+  if (keys.length === 0) { logEl.innerHTML = '<p style="color:var(--muted);font-size:13px;">Nenhuma sessão registrada ainda.</p>'; return; }
+  logEl.innerHTML = keys.map(k => {
+    const d = state.days[k];
+    const n = state.notes[k] || {};
+    const dateLabel = new Date(k+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+    return `<div class="log-entry">
+      <div class="log-date">${dateLabel}${metGoal(k) ? ' ✓' : ''}</div>
+      <div class="log-line"><b>CSA:</b> ${Math.round(d.csa/60)}min ${n.csa ? '— '+n.csa : ''}</div>
+      <div class="log-line"><b>SPM:</b> ${Math.round(d.spm/60)}min ${n.spm ? '— '+n.spm : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('logBtn').addEventListener('click', () => {
+  const el = document.getElementById('log');
+  el.classList.toggle('open');
+  document.getElementById('logBtn').textContent = el.classList.contains('open') ? 'esconder histórico' : 'ver histórico';
+});
+
+renderAll();
+</script>
+</body>
+</html>
